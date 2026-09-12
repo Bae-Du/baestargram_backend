@@ -113,3 +113,29 @@ def test_upload_image_and_create_post(client, tmp_path, monkeypatch):
     )
     assert created.status_code == 201
     assert created.json()["media"][0]["url"] == url
+
+
+def test_like_and_unlike_post(client):
+    owner_headers, _ = _signup(client, username="owner", email="owner@example.com")
+    fan_headers, _ = _signup(client, username="fan", email="fan@example.com")
+    post = client.post(
+        "/api/v1/posts",
+        json={"caption": "좋아요", "media_urls": ["https://example.com/like.jpg"]},
+        headers=owner_headers,
+    ).json()
+
+    liked = client.post(f"/api/v1/posts/{post['id']}/like", headers=fan_headers)
+    assert liked.status_code == 200
+    assert liked.json() == {"liked": True, "like_count": 1}
+
+    again = client.post(f"/api/v1/posts/{post['id']}/like", headers=fan_headers)
+    assert again.status_code == 200
+    assert again.json()["like_count"] == 1
+
+    feed = client.get("/api/v1/feed", headers=fan_headers).json()
+    assert feed[0]["liked_by_me"] is True
+    assert feed[0]["like_count"] == 1
+
+    unliked = client.delete(f"/api/v1/posts/{post['id']}/like", headers=fan_headers)
+    assert unliked.status_code == 200
+    assert unliked.json() == {"liked": False, "like_count": 0}

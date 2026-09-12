@@ -7,3 +7,8 @@ class Message(BaseModel):
 
 class UploadRead(BaseModel):
     url: str
+
+
+class LikeStatus(BaseModel):
+    liked: bool
+    like_count: int
