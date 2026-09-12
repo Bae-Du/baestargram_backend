@@ -139,3 +139,33 @@ def test_like_and_unlike_post(client):
     unliked = client.delete(f"/api/v1/posts/{post['id']}/like", headers=fan_headers)
     assert unliked.status_code == 200
     assert unliked.json() == {"liked": False, "like_count": 0}
+
+
+def test_owner_can_update_and_delete_post(client):
+    owner_headers, _ = _signup(client, username="editor", email="editor@example.com")
+    other_headers, _ = _signup(client, username="viewer", email="viewer@example.com")
+    post = client.post(
+        "/api/v1/posts",
+        json={"caption": "원본", "media_urls": ["https://example.com/edit.jpg"]},
+        headers=owner_headers,
+    ).json()
+
+    forbidden = client.patch(
+        f"/api/v1/posts/{post['id']}",
+        json={"caption": "해킹"},
+        headers=other_headers,
+    )
+    assert forbidden.status_code == 403
+
+    updated = client.patch(
+        f"/api/v1/posts/{post['id']}",
+        json={"caption": "수정됨"},
+        headers=owner_headers,
+    )
+    assert updated.status_code == 200
+    assert updated.json()["caption"] == "수정됨"
+
+    deleted = client.delete(f"/api/v1/posts/{post['id']}", headers=owner_headers)
+    assert deleted.status_code == 200
+    missing = client.get(f"/api/v1/posts/{post['id']}")
+    assert missing.status_code == 404

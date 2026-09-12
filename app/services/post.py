@@ -6,7 +6,7 @@ from app.models.comment import Comment  # noqa: F401
 from app.models.like import Like  # noqa: F401
 from app.models.post import Post, PostMedia
 from app.models.user import User
-from app.schemas.post import PostCreate, PostMediaRead, PostRead
+from app.schemas.post import PostCreate, PostMediaRead, PostRead, PostUpdate
 from app.schemas.user import UserPublic
 
 
@@ -92,11 +92,25 @@ def get_post(
     return _to_post_read(post, current_user)
 
 
-def delete_post(db: Session, post_id: int, current_user: User) -> None:
+def _require_owned_post(db: Session, post_id: int, current_user: User) -> Post:
     post = db.get(Post, post_id)
     if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
     if post.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not post owner")
+    return post
+
+
+def update_post(db: Session, post_id: int, current_user: User, payload: PostUpdate) -> PostRead:
+    post = _require_owned_post(db, post_id, current_user)
+    if payload.caption is not None:
+        post.caption = payload.caption.strip() or None
+    db.add(post)
+    db.commit()
+    return get_post(db, post_id, current_user)
+
+
+def delete_post(db: Session, post_id: int, current_user: User) -> None:
+    post = _require_owned_post(db, post_id, current_user)
     db.delete(post)
     db.commit()

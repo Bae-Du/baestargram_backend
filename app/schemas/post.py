@@ -19,6 +19,10 @@ class PostCreate(BaseModel):
     media_urls: list[str] = Field(min_length=1)
 
 
+class PostUpdate(BaseModel):
+    caption: str | None = Field(default=None, max_length=2200)
+
+
 class PostRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
