@@ -27,3 +27,28 @@ def test_signup_and_login(client):
     me = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert me.status_code == 200
     assert me.json()["email"] == "baestar@example.com"
+
+
+def test_signup_defaults_display_name_to_username(client):
+    signup = client.post(
+        "/auth/signup",
+        json={
+            "username": "nonameuser",
+            "email": "noname@example.com",
+            "password": "password123",
+        },
+    )
+    assert signup.status_code == 201
+    assert signup.json()["user"]["display_name"] == "nonameuser"
+
+    empty_name = client.post(
+        "/auth/signup",
+        json={
+            "username": "emptyname",
+            "email": "emptyname@example.com",
+            "password": "password123",
+            "display_name": "   ",
+        },
+    )
+    assert empty_name.status_code == 201
+    assert empty_name.json()["user"]["display_name"] == "emptyname"

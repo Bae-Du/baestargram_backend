@@ -27,11 +27,12 @@ def signup_user(db: Session, payload: SignupRequest) -> AuthResponse:
             detail="Username or email already exists",
         )
 
+    display_name = (payload.display_name or "").strip() or payload.username
     user = User(
         username=payload.username,
         email=payload.email,
         hashed_password=hash_password(payload.password),
-        display_name=payload.display_name,
+        display_name=display_name,
     )
     db.add(user)
     db.commit()

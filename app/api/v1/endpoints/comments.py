@@ -1,14 +1,15 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from app.core.deps import CurrentUser, DBSession
 from app.schemas.comment import CommentCreate, CommentRead
+from app.services import comment as comment_service
 
 router = APIRouter(tags=["comments"])
 
 
 @router.get("/posts/{post_id}/comments", response_model=list[CommentRead])
 def list_comments(post_id: int, db: DBSession) -> list[CommentRead]:
-    return []
+    return comment_service.list_comments(db, post_id)
 
 
 @router.post(
@@ -22,4 +23,4 @@ def create_comment(
     db: DBSession,
     current_user: CurrentUser,
 ) -> CommentRead:
-    raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Not implemented")
+    return comment_service.create_comment(db, post_id, current_user, payload)

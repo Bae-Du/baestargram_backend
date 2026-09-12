@@ -42,5 +42,18 @@ def get_current_user(
     return user
 
 
+def get_optional_current_user(
+    db: Annotated[Session, Depends(get_db)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+) -> User | None:
+    if credentials is None:
+        return None
+    try:
+        return get_current_user(db, credentials)
+    except HTTPException:
+        return None
+
+
 CurrentUser = Annotated[User, Depends(get_current_user)]
+OptionalUser = Annotated[User | None, Depends(get_optional_current_user)]
 DBSession = Annotated[Session, Depends(get_db)]
