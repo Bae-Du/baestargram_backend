@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.schemas.user import UserUpdate
+from app.utils.profanity import reject_if_profane
 
 
 def get_user_by_username(db: Session, username: str) -> User:
@@ -18,6 +19,10 @@ def update_me(db: Session, user: User, payload: UserUpdate) -> User:
     if "website" in data and data["website"] is not None:
         data["website"] = str(data["website"])
 
+    reject_if_profane(
+        data.get("display_name") if isinstance(data.get("display_name"), str) else None,
+        data.get("bio") if isinstance(data.get("bio"), str) else None,
+    )
     for field, value in data.items():
         setattr(user, field, value)
 

@@ -6,6 +6,7 @@ from app.models.comment import Comment
 from app.models.post import Post
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentRead
+from app.utils.profanity import reject_if_profane
 
 
 def list_comments(db: Session, post_id: int) -> list[CommentRead]:
@@ -38,6 +39,7 @@ def create_comment(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Comment cannot be empty",
         )
+    reject_if_profane(content)
 
     parent_id = payload.parent_id
     if parent_id is not None:

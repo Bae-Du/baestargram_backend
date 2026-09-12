@@ -6,6 +6,7 @@ from app.core.security import create_access_token, hash_password, verify_passwor
 from app.models.user import User
 from app.schemas.auth import AuthResponse, LoginRequest, SignupRequest
 from app.schemas.user import UserMe
+from app.utils.profanity import reject_if_profane
 
 
 def _to_auth_response(user: User) -> AuthResponse:
@@ -27,7 +28,9 @@ def signup_user(db: Session, payload: SignupRequest) -> AuthResponse:
             detail="Username or email already exists",
         )
 
+    reject_if_profane(payload.username, payload.display_name)
     display_name = (payload.display_name or "").strip() or payload.username
+    reject_if_profane(display_name)
     user = User(
         username=payload.username,
         email=payload.email,

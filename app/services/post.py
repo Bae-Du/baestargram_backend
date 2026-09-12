@@ -8,6 +8,7 @@ from app.models.post import Post, PostMedia
 from app.models.user import User
 from app.schemas.post import PostCreate, PostMediaRead, PostRead, PostUpdate
 from app.schemas.user import UserPublic
+from app.utils.profanity import reject_if_profane
 
 
 def _load_options():
@@ -60,6 +61,7 @@ def create_post(db: Session, current_user: User, payload: PostCreate) -> PostRea
             detail="At least one media url is required",
         )
 
+    reject_if_profane(payload.caption)
     post = Post(user_id=current_user.id, caption=payload.caption)
     db.add(post)
     db.flush()
@@ -104,7 +106,9 @@ def _require_owned_post(db: Session, post_id: int, current_user: User) -> Post:
 def update_post(db: Session, post_id: int, current_user: User, payload: PostUpdate) -> PostRead:
     post = _require_owned_post(db, post_id, current_user)
     if payload.caption is not None:
-        post.caption = payload.caption.strip() or None
+        caption = payload.caption.strip() or None
+        reject_if_profane(caption)
+        post.caption = caption
     db.add(post)
     db.commit()
     return get_post(db, post_id, current_user)
